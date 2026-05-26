@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="66189f5d-7099-42b4-9397-1196e559c824" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="1b74065b-6ee8-40ac-8eec-b2cd12460b7b" >
+		<db:my-sql-connection host="127.0.0.1" port="3306" user="root" password="Deptcse@123" database="hospital" />
+	</db:config>
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="00e595a9-883d-4642-9f53-98354b5e89c4" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<http:listener-config name="HTTP_Listener_config2" doc:name="HTTP Listener config" doc:id="3d1e5989-c0ae-4371-a44a-4dcbceb2765e" >
+		<http:listener-connection host="0.0.0.0" port="8083" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="d1a4f9ce-801b-43cb-b654-8fd058267f41" >
+		<file:connection workingDir="D:\" />
+	</file:config>
+	<flow name="demoprojectFlow" doc:id="5606b3a9-3c27-42fd-afa9-ac0e6d921aa2" >
+		<http:listener doc:name="Listener" doc:id="82b65f88-eddf-4442-a230-b353a6f0161c" config-ref="HTTP_Listener_config" path="/Munit"/>
+		<db:select doc:id="ff84c56f-7a38-44e1-a58c-bd9994c02d5d" config-ref="Database_Config" doc:name="Select" >
+			<db:sql ><![CDATA[SELECT * FROM patient;]]></db:sql>
+			<db:input-parameters ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+    pageSize: (attributes.queryParams.size default 5) as Number,
+    
+    // This logic ensures:
+    // Page 1 -> (1-1) * 5 = 0 (Starts at record 1)
+    // Page 2 -> (2-1) * 5 = 5 (Starts at record 6)
+    offset: ((attributes.queryParams.page default 1 as Number) - 1) * (attributes.queryParams.size default 5 as Number)
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="e2c876c8-c9a0-41ad-a046-40f0b0fe689b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="e58f05df-8576-4457-906d-28558c94d2da" >
+			<when expression="#[sizeOf(payload) &gt; 0]" >
+				<ee:transform doc:name="Transform Message" doc:id="0085e170-9fac-4c0e-87c6-0896a09c807d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<set-variable value="#[404]" doc:name="Set Variable" doc:id="0eff9b2f-0c47-4716-b119-d7264939c778" variableName="httpStatus" />
+				<set-payload value='#["Not found"]' doc:name="Set Payload" doc:id="a9dcadea-8799-4666-8045-0f0d47aea0e6" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="ScatterGather" doc:id="c1216c33-7113-4847-a4e9-72433cc365ad" >
+		<http:listener doc:name="Listener" doc:id="d203a12a-0ea4-460b-9e01-e0c7f3a7f29d" config-ref="HTTP_Listener_config1" path="/scattergather"/>
+		<scatter-gather>
+
+    <route>
+        <db:select config-ref="Database_Config">
+            <db:sql>SELECT * FROM patient</db:sql>
+        </db:select>
+        <logger level="INFO" message="#[payload]"/>
+    </route>
+
+    <route>
+        <db:select config-ref="Database_Config">
+            <db:sql>SELECT * FROM doctor</db:sql>
+        </db:select>
+        <logger level="INFO" message='#[payload]'/>
+    </route>
+
+    <route>
+        <db:select config-ref="Database_Config">
+            <db:sql>SELECT * FROM billing</db:sql>
+        </db:select>
+        <logger level="INFO" message="#[payload]"/>
+    </route>
+
+</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="de2a73ee-eb35-4994-b046-f1cf55b94e16" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+	</flow>
+	<flow name="FileConnector" doc:id="2e84e2e8-2a35-4c55-90be-c5ff64a9224e">
+		<http:listener doc:name="Listener" doc:id="714cedfa-07d3-4cbd-befa-2d3cbeb840dc" config-ref="HTTP_Listener_config2" path="/fileconnector" />
+		<logger level="INFO" doc:name="Logger" doc:id="fe88e6e2-3efc-4aca-bb3e-5eeaa4d5e137" message='#["Fileconnector starts here"]'/>
+		<file:write doc:id="8cb980db-9299-45d6-8486-edd54ead5b28" config-ref="File_Config" path="C:\Users\Hp\OneDrive\Documents\Hospital.txt" />
+	</flow>
+	<flow name="demoprojectFlow1" doc:id="61229466-0db1-456e-85e6-f07079dfc086" >
+		<file:listener doc:name="On New or Updated File" doc:id="41623243-db13-479e-9137-1f84c6e6377f" config-ref="File_Config" directory="D:\Fileconnector\On-new or updated" renameTo="D:\Fileconnector\On-new or updated\NEW_FILE.txt">
+			<scheduling-strategy >
+				<fixed-frequency frequency="10" timeUnit="SECONDS" />
+			</scheduling-strategy>
+		</file:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="deb91543-72a6-419b-baca-81dc5a81e07c" message="#[payload]" />
+	</flow>
+	<flow name="demoprojectFlow2" doc:id="42199900-ec5d-4e95-9b49-36f4ddcbcf54">
+
+    <file:listener
+        doc:name="On New or Updated File"
+        doc:id="75be36ec-fb0d-4183-a7fb-ab2e8c619f9a"
+        config-ref="File_Config"
+        directory="D:\Fileconnector\On-new or updated"
+        moveToDirectory="D:\Fileconnector\ProcessedFile">
+
+        <scheduling-strategy>
+            <fixed-frequency frequency="10" timeUnit="SECONDS"/>
+        </scheduling-strategy>
+
+    </file:listener>
+
+    <logger
+        level="INFO"
+        doc:name="Logger"
+        doc:id="95476233-2250-4b79-931c-bc1793a1feff"
+        message="#[payload]" />
+
+</flow>
+</mule>

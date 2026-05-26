@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="munit-suite.xml" />
+	<munit:test name="demoprojectFlow-test-success" doc:id="6591ce03-b557-460e-83ec-aa47bc5e3078" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Select" doc:id="512fc3a7-69c8-4d27-b007-a93c32ca4990" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ff84c56f-7a38-44e1-a58c-bd9994c02d5d" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://demoprojectFlowtestsuccess\mock_payload.dwl')]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="f9b20c5a-f730-4a92-b961-ae137cc8c570" >
+				<munit:payload value="#[readUrl('classpath://demoprojectFlowtestsuccess\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://demoprojectFlowtestsuccess\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to demoprojectFlow" doc:id="1271f49c-039e-4d71-b626-e23c5dc17f2a" name="demoprojectFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="d3af12b2-0558-4afd-b518-9b55e3f109e8" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import demoprojectFlowtestsuccess::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="demoprojectFlow-test" doc:id="e7e2548c-9bd6-4c91-bf79-078ab47a5ecf" >
+		<munit:behavior >
+			<munit-tools:spy doc:name="Spy Transform Message" doc:id="f5af130f-4494-4f5c-95bc-8e2ed89cd863" processor="ee:transform">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="0085e170-9fac-4c0e-87c6-0896a09c807d" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:before-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="d8ae2d5e-86b5-4c48-af90-cb2507901b56" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import demoprojectFlowtest::spy_assert_payload
+---
+spy_assert_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:before-call>
+				<munit-tools:after-call >
+					<munit-tools:assert doc:name="Assert payload" doc:id="356bb304-86e4-4dd5-b407-00a6a30bd853" message="The payload does not match">
+						<munit-tools:that ><![CDATA[#[%dw 2.0
+import demoprojectFlowtest::spy_assert_payload1
+---
+spy_assert_payload1::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+					</munit-tools:assert>
+				</munit-tools:after-call>
+			</munit-tools:spy>
+			<munit:set-event doc:name="Set Input" doc:id="5268039f-00c1-4dc0-b304-e60a553c2feb" >
+				<munit:payload value="#[readUrl('classpath://demoprojectFlowtest\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://demoprojectFlowtest\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to demoprojectFlow" doc:id="685c3085-cb17-42e1-9985-61a977eb67ad" name="demoprojectFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="f5ec8b8e-78f9-4046-abf8-200d28be9fa4" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import demoprojectFlowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+			<munit-tools:verify-call doc:name="Verify Transform Message" doc:id="c6083933-528b-4a3f-a215-5acfd884aa4e" processor="ee:transform" times="1">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="0085e170-9fac-4c0e-87c6-0896a09c807d" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:verify-call>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="demoprojectFlow-test-success1" doc:id="f6b10490-6c08-450f-a9c9-0cb0ca8fa50b" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock Select" doc:id="aa85f624-1176-48cb-bf2f-df2f7c011ee9" processor="db:select">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ff84c56f-7a38-44e1-a58c-bd9994c02d5d" attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/java --- readUrl('classpath://demoprojectFlowtestsuccess1\mock_payload.dwl')]" mediaType="application/java" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit:set-event doc:name="Set Input" doc:id="03fb5210-6ff7-4427-98f3-b547236f2d2b" >
+				<munit:payload value="#[readUrl('classpath://demoprojectFlowtestsuccess1\set-event_payload.dwl')]" encoding="UTF-8" />
+				<munit:attributes value="#[readUrl('classpath://demoprojectFlowtestsuccess1\set-event_attributes.dwl')]" />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to demoprojectFlow" doc:id="fc9b1fb7-16b0-40a0-94b5-0203f2f1add1" name="demoprojectFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert doc:name="Assert payload" doc:id="2cd70b1f-8624-42a3-9753-ae581e3ca880" message="The payload does not match">
+				<munit-tools:that ><![CDATA[#[%dw 2.0
+import demoprojectFlowtestsuccess1::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
